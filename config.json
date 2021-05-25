@@ -1,0 +1,13 @@
+{
+    "filename": "data_corr5.csv",
+    "diagram_name": "CIE 1931 2 Standard Observer Chromaticity Diagram",
+    
+    "row_begin": 6,
+
+    "x_wl_column": 35,
+    "x_norm_column": 41,
+    "y_wl_column": 22,
+    "y_norm_column": 39,
+    "z_wl_column": 9,
+    "z_norm_column": 11
+}

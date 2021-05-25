@@ -1,0 +1,13 @@
+{
+    "filename": "data.csv",
+    "diagram_name": "CIE 1931 2 Standard Observer Chromaticity Diagram",
+
+    "row_begin": 6,
+
+    "x_wl_column": 35,
+    "x_norm_column": 37,
+    "y_wl_column": 22,
+    "y_norm_column": 24,
+    "z_wl_column": 9,
+    "z_norm_column": 11
+}
