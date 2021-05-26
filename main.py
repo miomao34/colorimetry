@@ -6,17 +6,19 @@ import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import (
     FigureCanvasTkAgg, NavigationToolbar2Tk)
 import os
+import random
+import numpy as np
 
 import logic
 
-# config = logic.read_config()
-config = logic.read_config('config.json')
+config = logic.read_config()
+# config = logic.read_config('config.json')
 
 window = Tk()
 window.title('Colorimetry')
 # window.geometry('350x200')
 
-plot, _ = plot_chromaticity_diagram_CIE1931(standalone=False)
+plot, ax = plot_chromaticity_diagram_CIE1931(standalone=False)
 # annotations = []
 # figure = None
 
@@ -31,21 +33,21 @@ toolbar.pack(side=TOP, anchor=N)
 
 frame = Frame(window)
 label = Label(master=frame, text=config['filename'])
-txt = Text(frame, width=30, height=3)
+txt = Text(frame, width=32, height=4)
 
 patch_name = 'neutral 5 (.70 D)'
 patch_sd = colour.SDS_COLOURCHECKERS['ColorChecker N Ohta'][patch_name]
 
-xy = [0.31259787, 0.32870029]
-x, y = xy
+white = [0.31259787, 0.32870029]
+x, y = white
 # plt.plot(x, y, 'o-', color='white')
 
-# Annotating the plot.
-plt.annotate(patch_sd.name.title(),
-             xy=xy,
-             xytext=(-50, 30),
+# Annotating the point of white.
+plt.annotate('D65',
+             xy=white,
+             xytext=(30, 10),
              textcoords='offset points',
-             arrowprops=dict(arrowstyle='->', connectionstyle='arc3, rad=-0.2'))
+             arrowprops=dict(arrowstyle='->', connectionstyle='arc3, rad=0.2'))
 
 plt.title(config['diagram_name'])
 
@@ -60,7 +62,7 @@ def _get_data_file():
 
 def _run():
     # config['filename'] = 'data_corr.csv'
-    x, y, z = logic.get_data(config)
+    x_data, y_data, z_data = logic.get_data(config)
     # sum_x = 0
     # for val in x.values():
     #     sum_x += val
@@ -71,23 +73,46 @@ def _run():
     # for val in z.values():
     #     sum_z += val
     # print('****', sum_x, sum_y, sum_z, '****')
-    x, sumx = logic.get_coordinates_manual(x)
-    y, sumy = logic.get_coordinates_manual(y)
-    z, sumz = logic.get_coordinates_manual(z)
+    x, sumx = logic.get_coordinates_and_sum(x_data)
+    y, sumy = logic.get_coordinates_and_sum(y_data)
+    z, sumz = logic.get_coordinates_and_sum(z_data)
 
-    print('****', sumx, sumy, sumz, '****')
+    # got coords
     print(x, y, z)
+    print('****', sumx, sumy, sumz, '****')
+
+    # calculatilg what coefficients we need to mix the input spectrums with to get white light
+    # we go from:
+    # x_mix = (k_1*m_1*x_1 + k_2*m_2*x_2 + k_3*m_3*x_3) / (k_1*m_1 + k_2*m_2 + k_3*m_3)
+    # y_mix = (k_1*m_1*y_1 + k_2*m_2*y_2 + k_3*m_3*y_3) / (k_1*m_1 + k_2*m_2 + k_3*m_3)
+    # to, assuming k_3 as 1:
+    # k_1*m_1*(x_mix - x_1) + k_2*m_2*(x_mix - x_2) = 1*m_3*(x_3 - x_mix)
+    # k_1*m_1*(y_mix - y_1) + k_2*m_2*(y_mix - y_2) = 1*m_3*(y_3 - y_mix)
+    # this is a linear equation where we don't know k_1 and k_2
+    coef_1_1 = sumx*(white[0]-x[0])
+    coef_1_2 = sumy*(white[0]-y[0])
+    coef_1_b = 1*sumz*(z[0]-white[0])
+    coef_2_1 = sumx*(white[1]-x[1])
+    coef_2_2 = sumy*(white[1]-y[1])
+    coef_2_b = 1*sumz*(z[1]-white[1])
+
+    a = np.array([[coef_1_1, coef_1_2], [coef_2_1, coef_2_2]])
+    b = np.array([coef_1_b, coef_2_b])
+    coefs = np.linalg.solve(a, b).tolist()
+    # coefs.append(1)
+    print(coefs)
+
+    final_spectrum = [coefs[0]*x_data[i] + coefs[1]*y_data[i] + z_data[i] for i in x_data.keys()]
+
     # x=0.782, y=0.704451
-    wh=[z[0]+0.245047*x[0]+0.0134472*y[0], z[1]+0.245047*x[1]+0.0134472*y[1]]
-    fr=[0.292936*x[0]+0.155379*y[0]+0.551685*z[0], 0.292936*x[1]+0.155379*y[1]+0.551685*z[1]]
-    test=[(z[0]/z[1] + 0.782*x[0]/x[1] + 0.704451*y[0]/y[1]) / (1/z[1] + 0.782 / x[1] + 0.704451 / y[1]),
-        (1 + 0.782 + 0.704451) / (1/z[1] + 0.782/x[1] + 0.704451/y[1])]
-    # test2 = [(z[0]/z[1] + 0.245047*x[0]/x[1] + 0.0134472*y[0]/y[1]) / (1/z[1] + 0.245047 / x[1] + 0.0134472 / y[1]),
-    #     (1 + 0.245047 + 0.0134472) / (1/z[1] + 0.245047/x[1] + 0.0134472/y[1])]
-    print('true:', xy)
-    print('blu1:', wh)
-    print('form:', fr)
-    print('test:', test)
+    # wh=[z[0]+0.245047*x[0]+0.0134472*y[0], z[1]+0.245047*x[1]+0.0134472*y[1]]
+    # fr=[0.292936*x[0]+0.155379*y[0]+0.551685*z[0], 0.292936*x[1]+0.155379*y[1]+0.551685*z[1]]
+    # test=[(z[0]/z[1] + 0.782*x[0]/x[1] + 0.704451*y[0]/y[1]) / (1/z[1] + 0.782 / x[1] + 0.704451 / y[1]),
+    #     (1 + 0.782 + 0.704451) / (1/z[1] + 0.782/x[1] + 0.704451/y[1])]
+    # print('true:', xy)
+    # print('blu1:', wh)
+    # print('form:', fr)
+    # print('test:', test)
     ########
 
     # xy = [0.31259787, 0.32870029]
@@ -105,13 +130,27 @@ def _run():
     x_numbers = [i[0] for i in [x, y, z, x]]
     y_numbers = [i[1] for i in [x, y, z, x]]
 
+    # removes all previous plotted lines
+    # while True:
+    #     try:
+    #         ax.lines.pop(0)
+    #     except:
+    #         break
 
-    plt.plot(x_numbers, y_numbers, color='black', linewidth=1.0)
+    # ax.plot([random.random(), random.random()], [random.random(), random.random()])
+
+    ax.plot(x_numbers, y_numbers, color='black', linewidth=1.0)
+    plt.draw()
+
+    spt, spt_ax = plt.subplots()
+    spt_ax.plot(x_data.keys(), final_spectrum)
+    spt.show()
+    # spt.delaxes(spt_ax)
+    # plt.figure()
     # plt.annotate('Red', x)
     # plt.annotate('Green', y)
     # plt.annotate('Blue', z)
 
-    plt.draw()
 
 
 def _quit():

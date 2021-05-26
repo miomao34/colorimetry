@@ -70,21 +70,21 @@ def get_data(config: Dict) -> Union[Dict, Dict, Dict]:
 
             # checking if all values exist; if not, return existing 
             # -1 is for normal language column numbering
-            if not row[config['x_wl_column'] - 1] or \
-            not row[config['x_norm_column'] - 1] or \
-            not row[config['y_wl_column'] - 1] or \
-            not row[config['y_norm_column'] - 1] or \
-            not row[config['z_wl_column'] - 1] or \
-            not row[config['z_norm_column'] - 1]:
+            if not row[config['r_wl_column'] - 1] or \
+            not row[config['r_norm_column'] - 1] or \
+            not row[config['g_wl_column'] - 1] or \
+            not row[config['g_norm_column'] - 1] or \
+            not row[config['b_wl_column'] - 1] or \
+            not row[config['b_norm_column'] - 1]:
                 break
 
             # a bit dirty but will do for now
-            x_raw[get_value(row, config['x_wl_column'] - 1)] = get_value(row, config['x_norm_column'] - 1)
-            y_raw[get_value(row, config['y_wl_column'] - 1)] = get_value(row, config['y_norm_column'] - 1)
-            z_raw[get_value(row, config['z_wl_column'] - 1)] = get_value(row, config['z_norm_column'] - 1)
-            # if get_value(row, config['x_wl_column'] - 1) >= 360 and get_value(row, config['x_wl_column'] - 1) <= 840:
-            # if get_value(row, config['y_wl_column'] - 1) >= 360 and get_value(row, config['y_wl_column'] - 1) <= 840:
-            # if get_value(row, config['z_wl_column'] - 1) >= 360 and get_value(row, config['z_wl_column'] - 1) <= 840:
+            x_raw[get_value(row, config['r_wl_column'] - 1)] = get_value(row, config['r_norm_column'] - 1)
+            y_raw[get_value(row, config['g_wl_column'] - 1)] = get_value(row, config['g_norm_column'] - 1)
+            z_raw[get_value(row, config['b_wl_column'] - 1)] = get_value(row, config['b_norm_column'] - 1)
+            # if get_value(row, config['r_wl_column'] - 1) >= 360 and get_value(row, config['r_wl_column'] - 1) <= 840:
+            # if get_value(row, config['g_wl_column'] - 1) >= 360 and get_value(row, config['g_wl_column'] - 1) <= 840:
+            # if get_value(row, config['b_wl_column'] - 1) >= 360 and get_value(row, config['b_wl_column'] - 1) <= 840:
 
             index = index + 1
         
@@ -102,20 +102,20 @@ def get_data(config: Dict) -> Union[Dict, Dict, Dict]:
         
         return x, y, z
 
-    # return get_interpolated_data(config['filename'], config['row_begin'], config['x_wl_column'], config['x_norm_column']), \
-    #     get_interpolated_data(config['filename'], config['row_begin'], config['y_wl_column'], config['y_norm_column']), \
-    #     get_interpolated_data(config['filename'], config['row_begin'], config['z_wl_column'], config['z_norm_column']),
+    # return get_interpolated_data(config['filename'], config['row_begin'], config['r_wl_column'], config['r_norm_column']), \
+    #     get_interpolated_data(config['filename'], config['row_begin'], config['g_wl_column'], config['g_norm_column']), \
+    #     get_interpolated_data(config['filename'], config['row_begin'], config['b_wl_column'], config['b_norm_column']),
     
 
-def get_coordinates(data: List) -> List:
-    sd = colour.SpectralDistribution(data, name='Sample')
-    cmfs = colour.MSDS_CMFS['CIE 1931 2 Degree Standard Observer']
-    illuminant = colour.SDS_ILLUMINANTS['D65']
-    XYZ = colour.sd_to_XYZ(sd, cmfs, illuminant)
-    xy =  colour.XYZ_to_xy(XYZ)
-    return xy
+# def get_coordinates(data: List) -> List:
+#     sd = colour.SpectralDistribution(data, name='Sample')
+#     cmfs = colour.MSDS_CMFS['CIE 1931 2 Degree Standard Observer']
+#     illuminant = colour.SDS_ILLUMINANTS['D65']
+#     XYZ = colour.sd_to_XYZ(sd, cmfs, illuminant)
+#     xy =  colour.XYZ_to_xy(XYZ)
+#     return xy
 
-def get_coordinates_manual(data: List) -> List:
+def get_coordinates_and_sum(data: List) -> Union[List, List]:
     with open('docs/addition-curves-lookup-table.json', 'r') as table_file:
         table = json.load(table_file)
     

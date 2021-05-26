@@ -3,3 +3,4 @@ colour-science
 pillow
 matplotlib
 scipy
+numpy

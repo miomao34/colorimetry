@@ -41,9 +41,10 @@ A colorimetry app to determine color coordinates on CIE 1931 diagram and calcula
 ### Todo:
 - [ ] Cleanup `main.py`, split UI into functions
 - [ ] Add a more convenient config editor
-- [ ] Add the while light coefficients calculation
-- [ ] Calculate and plot the resulting white light spectrum
+- [x] Add the while light coefficients calculation
+- [x] Calculate and plot the resulting white light spectrum
 - [ ] Dump all the coordinates, coefficients and final spectrum into csv/txt/json
 - [ ] Add 1 arbitrary point plotting
 - [ ] Add various checks and failstate recoveries
+- [x] Remove previous lines on re-running the calculations
 - [x] Change `xyz` to `rgb` in config
