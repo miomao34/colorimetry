@@ -11,8 +11,8 @@ import numpy as np
 
 import logic
 
-config = logic.read_config()
-# config = logic.read_config('config.json')
+# config = logic.read_config()
+config = logic.read_config('config.json')
 
 window = Tk()
 window.title('Colorimetry')
