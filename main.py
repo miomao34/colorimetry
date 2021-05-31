@@ -76,6 +76,7 @@ def _run():
     # this is a linear equation where we don't know k_1 and k_2
     
     target = [config['target_x'], config['target_y']]
+    print('target:', target)
 
     coef_1_1 = sumx * (target[0] - x[0])
     coef_1_2 = sumy * (target[0] - y[0])
