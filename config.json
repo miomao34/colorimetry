@@ -9,5 +9,8 @@
     "g_wl_column": 22,
     "g_norm_column": 24,
     "b_wl_column": 9,
-    "b_norm_column": 11
+    "b_norm_column": 11,
+
+    "target_x": 0.31259787,
+    "target_y": 0.31259787
 }

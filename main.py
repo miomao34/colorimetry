@@ -11,16 +11,12 @@ import numpy as np
 
 import logic
 
-# config = logic.read_config()
 config = logic.read_config('config.json')
 
 window = Tk()
 window.title('Colorimetry')
-# window.geometry('350x200')
 
 plot, ax = plot_chromaticity_diagram_CIE1931(standalone=False)
-# annotations = []
-# figure = None
 
 canvas = FigureCanvasTkAgg(plot, master=window)
 canvas.draw()
@@ -29,11 +25,10 @@ canvas.get_tk_widget().pack(side=TOP, anchor=N, fill='none', expand=False)
 toolbar = NavigationToolbar2Tk(canvas, window)
 toolbar.update()
 toolbar.pack(side=TOP, anchor=N)
-# canvas.get_tk_widget().pack(side=RIGHT, fill=BOTH, expand=1)
 
 frame = Frame(window)
 label = Label(master=frame, text=config['filename'])
-txt = Text(frame, width=32, height=4)
+txt = Text(frame, width=34, height=3)
 
 patch_name = 'neutral 5 (.70 D)'
 patch_sd = colour.SDS_COLOURCHECKERS['ColorChecker N Ohta'][patch_name]
@@ -61,25 +56,15 @@ def _get_data_file():
 
 
 def _run():
-    # config['filename'] = 'data_corr.csv'
     x_data, y_data, z_data = logic.get_data(config)
-    # sum_x = 0
-    # for val in x.values():
-    #     sum_x += val
-    # sum_y = 0
-    # for val in y.values():
-    #     sum_y += val
-    # sum_z = 0
-    # for val in z.values():
-    #     sum_z += val
-    # print('****', sum_x, sum_y, sum_z, '****')
+
     x, sumx = logic.get_coordinates_and_sum(x_data)
     y, sumy = logic.get_coordinates_and_sum(y_data)
     z, sumz = logic.get_coordinates_and_sum(z_data)
 
     # got coords
-    print(x, y, z)
-    print('****', sumx, sumy, sumz, '****')
+    print('x, y, z:', x, y, z)
+    print('sums - x, y, z:', sumx, sumy, sumz)
 
     # calculatilg what coefficients we need to mix the input spectrums with to get white light
     # we go from:
@@ -89,39 +74,23 @@ def _run():
     # k_1*m_1*(x_mix - x_1) + k_2*m_2*(x_mix - x_2) = 1*m_3*(x_3 - x_mix)
     # k_1*m_1*(y_mix - y_1) + k_2*m_2*(y_mix - y_2) = 1*m_3*(y_3 - y_mix)
     # this is a linear equation where we don't know k_1 and k_2
-    coef_1_1 = sumx*(white[0]-x[0])
-    coef_1_2 = sumy*(white[0]-y[0])
-    coef_1_b = 1*sumz*(z[0]-white[0])
-    coef_2_1 = sumx*(white[1]-x[1])
-    coef_2_2 = sumy*(white[1]-y[1])
-    coef_2_b = 1*sumz*(z[1]-white[1])
+    
+    target = [config['target_x'], config['target_y']]
+
+    coef_1_1 = sumx * (target[0] - x[0])
+    coef_1_2 = sumy * (target[0] - y[0])
+    coef_1_b = 1 * sumz * (z[0] - target[0])
+    coef_2_1 = sumx * (target[1] - x[1])
+    coef_2_2 = sumy * (target[1] - y[1])
+    coef_2_b = 1 * sumz * (z[1] - target[1])
 
     a = np.array([[coef_1_1, coef_1_2], [coef_2_1, coef_2_2]])
     b = np.array([coef_1_b, coef_2_b])
     coefs = np.linalg.solve(a, b).tolist()
-    # coefs.append(1)
-    print(coefs)
+
+    print('mixing coefs, r and g:', coefs)
 
     final_spectrum = [coefs[0]*x_data[i] + coefs[1]*y_data[i] + z_data[i] for i in x_data.keys()]
-
-    # x=0.782, y=0.704451
-    # wh=[z[0]+0.245047*x[0]+0.0134472*y[0], z[1]+0.245047*x[1]+0.0134472*y[1]]
-    # fr=[0.292936*x[0]+0.155379*y[0]+0.551685*z[0], 0.292936*x[1]+0.155379*y[1]+0.551685*z[1]]
-    # test=[(z[0]/z[1] + 0.782*x[0]/x[1] + 0.704451*y[0]/y[1]) / (1/z[1] + 0.782 / x[1] + 0.704451 / y[1]),
-    #     (1 + 0.782 + 0.704451) / (1/z[1] + 0.782/x[1] + 0.704451/y[1])]
-    # print('true:', xy)
-    # print('blu1:', wh)
-    # print('form:', fr)
-    # print('test:', test)
-    ########
-
-    # xy = [0.31259787, 0.32870029]
-    # x_ch = [x[0] - z[0], x[1] - z[1]]
-    # y_ch = [y[0] - z[0], y[1] - z[1]]
-    
-    # print('****', x_ch, y_ch, '****')
-
-    ########
 
     txt.config(state=NORMAL)
     txt.delete('1.0', END)
@@ -130,28 +99,29 @@ def _run():
     x_numbers = [i[0] for i in [x, y, z, x]]
     y_numbers = [i[1] for i in [x, y, z, x]]
 
-    # removes all previous plotted lines
-    # while True:
-    #     try:
-    #         ax.lines.pop(0)
-    #     except:
-    #         break
-
-    # ax.plot([random.random(), random.random()], [random.random(), random.random()])
-
     ax.plot(x_numbers, y_numbers, color='black', linewidth=1.0)
     plt.draw()
 
     spt, spt_ax = plt.subplots()
     spt_ax.plot(x_data.keys(), final_spectrum)
     spt.show()
-    # spt.delaxes(spt_ax)
-    # plt.figure()
-    # plt.annotate('Red', x)
-    # plt.annotate('Green', y)
-    # plt.annotate('Blue', z)
 
+def _plot_point_window():
+    plotter_window = Toplevel(window)
+    Label(plotter_window, text='x [0-1]:').grid(column=1, row=1, sticky=W)
+    Label(plotter_window, text='y [0-1]:').grid(column=2, row=1, sticky=W)
+    x, y = Text(plotter_window, width=32, height=1), Text(plotter_window, width=32, height=1)
+    x.grid(column=1, row=2, sticky=W+E)
+    y.grid(column=2, row=2, sticky=W+E)
+    plotter_button = Button(master=plotter_window, text="Plot", command=lambda: _plot_point(x, y, plotter_window))
+    plotter_button.grid(column=2, row=3, sticky=W+E)
+    plotter_window.mainloop()
 
+def _plot_point(x, y, plotter_window):
+    ax.plot(float(x.get("1.0",END)), float(y.get("1.0",END)), 'ro', color='black')
+    plt.draw()
+    plotter_window.quit()
+    plotter_window.destroy()
 
 def _quit():
     window.quit()
@@ -168,10 +138,8 @@ quit_button = Button(master=frame, text="Quit", command=_quit)
 quit_button.grid(column=1, row=3, sticky=W)
 
 data_file_button = Button(master=frame, text="Select data file...", command=_get_data_file)
-# data_file_button.pack(side=TOP, anchor=NW)
 data_file_button.grid(column=1, row=1, sticky=W+E)
 
-# label.pack(side=TOP, anchor=N)
 label.grid(column=2, row=1)
 
 txt.grid(column=3, row=1, rowspan=2, sticky=W+E)
@@ -180,7 +148,7 @@ txt.config(state=DISABLED)
 run_button = Button(master=frame, text='RUN', command=_run)
 run_button.grid(column=2, row=2, sticky=W+E)
 
-# table_file_button = Button(master=window, text="Select table file...", command=_get_table_file)
-# table_file_button.grid(column=0, row=2)
+plot_point_button = Button(master=frame, text='Plot point...', command=_plot_point_window)
+plot_point_button.grid(column=1, row=2, sticky=W+E)
 
 mainloop()

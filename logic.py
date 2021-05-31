@@ -40,7 +40,6 @@ def get_interpolated_data(filename: str, row_begin: int, wl_column: int, norm_co
                 index = index + 1
                 continue
 
-            # a bit dirty but will do for now
             raw[get_value(row, wl_column - 1)] = get_value(row, norm_column - 1)
 
             index = index + 1
@@ -105,15 +104,6 @@ def get_data(config: Dict) -> Union[Dict, Dict, Dict]:
     # return get_interpolated_data(config['filename'], config['row_begin'], config['r_wl_column'], config['r_norm_column']), \
     #     get_interpolated_data(config['filename'], config['row_begin'], config['g_wl_column'], config['g_norm_column']), \
     #     get_interpolated_data(config['filename'], config['row_begin'], config['b_wl_column'], config['b_norm_column']),
-    
-
-# def get_coordinates(data: List) -> List:
-#     sd = colour.SpectralDistribution(data, name='Sample')
-#     cmfs = colour.MSDS_CMFS['CIE 1931 2 Degree Standard Observer']
-#     illuminant = colour.SDS_ILLUMINANTS['D65']
-#     XYZ = colour.sd_to_XYZ(sd, cmfs, illuminant)
-#     xy =  colour.XYZ_to_xy(XYZ)
-#     return xy
 
 def get_coordinates_and_sum(data: List) -> Union[List, List]:
     with open('docs/addition-curves-lookup-table.json', 'r') as table_file:
@@ -126,20 +116,3 @@ def get_coordinates_and_sum(data: List) -> Union[List, List]:
         z += data[wavelength] * table['CIE_Z_entries'][wavelength - 360]
 
     return [x / (x + y + z), y / (x + y + z)], x + y + z
-
-# def get_coordinates_manual_coef(data: List) -> List:
-#     with open('docs/addition-curves-lookup-table.json', 'r') as table_file:
-#         table = json.load(table_file)
-    
-#     k = 0
-#     for wavelength in range(360, 830+1):
-#         k += data[wavelength] * table['CIE_Y_entries'][wavelength - 360]
-#     k =/ k
-
-#     x, z = 0, 0
-#     y = 100
-#     for wavelength in range(360, 830+1):
-#         x += k * data[wavelength] * table['CIE_X_entries'][wavelength - 360]
-#         z += k * data[wavelength] * table['CIE_Z_entries'][wavelength - 360]
-
-#     return [x / (x + y + z), y / (x + y + z)]
